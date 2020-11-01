@@ -3,85 +3,110 @@ version: 0.1
 name: S3 Mount
 baseUrl: https://raw.githubusercontent.com/panslothda/Jelastic-S3/master
 logo: images/logo.png
-homepage: https://XXX
 description: |
-  XXX
+  Allows the mounting of S3 Buckets
 
-skipNodeEmails: true
+targetNodes:
+  nodeGroup: '*'
 
-nodes:
-  nodeType: llsmp
-  fixedCloudlets: 4
-  cloudlets: 16
-  nodeGroup: cp
-  skipEmail: true
-
-globals:
-  DB_USER: jelastic-${fn.random}
-  DB_PASS: ${fn.password(10)}
-  DB_HOST: 127.0.0.1
-  XXX_PASS: ${fn.password(10)}
+onBeforeInit: scripts/settings.js
 
 onInstall:
-  - XXX
-  - enable-ssl
-  - XXX
+  - variables
+  - install-s3ql
+  - configure-s3ql
   - add-to-redeploy
-  - installAddon:
-      id: update-addon
-      nodeGroup: XXX  
 
 onAfterRedeployContainer:
   - redeploy
 
-addons:
-  - id: update-addon
-    name: Update XXX XXX
-    description: XXX
-    buttons:
-      - caption: Update
-        action: update
-        loadingText: Updating...
-        confirmText: Do you want to update XXX?
-        successText: XXX have been successfully updated!
-    actions:
-      update:
-        - log: XXX
-        - install: https://raw.githubusercontent.com/panslothda/XXX/scripts/update-XXX.jps
-          skipEmail: true
+buttons:
+  - confirmText: Do you want to update the s3ql binary?
+    loadingText: Updating...
+    action: update
+    caption: Update s3ql
+    successText: s3ql has been upgraded
+  - caption: Configure
+    action: re-configure
+    settings: main
+    loadingText: Configuring...
+    successText: /text/success.md
 
 actions:
-  XXX:
-    api[cp]:
-      - method: XXX
-        params:
+  variables:
+    - log: Modify Variables
+    - if ('${settings.mode}' === 'swiss-backup'):
+        setGlobals: 
+          OS_USERNAME: ${settings.OS_USERNAME}
+          OS_PASSWORD: ${settings.OS_PASSWORD}
+          REGION_NAME: RegionOne
+          CT_NAME: sb_project_${settings.OS_USERNAME}
+          OS_PROJECT_NAME: sb_project_${settings.OS_USERNAME}
+          KEYSTONE-V3-HOST: "swiftks://swiss-backup.infomaniak.com:443"
+    - else:
+        setGlobals: 
+          OS_USERNAME: ${settings.OS_USERNAME}
+          OS_PASSWORD: ${settings.OS_PASSWORD}
+          REGION_NAME: ${settings.REGION_NAME}
+          CT_NAME: ${settings.CT_NAME}
+          OS_PROJECT_NAME: ${settings.OS_PROJECT_NAME}
+          KEYSTONE-V3-HOST: swiftks://${settings.KEYSTONE-V3-HOST}
 
-  enable-ssl:
-    log: Enable Built in SSL
-    env.control.EditEnvSettings:
+  install-s3ql:
+    - log: Launch install-s3ql jps
+    - install: ${baseUrl}scripts/install-s3ql.jps
       settings:
-        sslstate: true
+        node: "${targetNodes.nodeGroup}"
+      skipEmail: true
 
-  XXX:
-    - log: XXX
-    - cmd [cp]: |-
-        XXX
-      user: root  
+  configure-s3ql:
+    - log: Configure the settings and mount
+    - install: ${baseUrl}scripts/configure-s3ql.jps
+      settings:
+        node: "${targetNodes.nodeGroup}"
+        OS_USERNAME: ${globals.OS_USERNAME}
+        OS_PASSWORD: ${globals.OS_PASSWORD}
+        REGION_NAME: ${globals.REGION_NAME}
+        CT_NAME: ${globals.CT_NAME}
+        OS_PROJECT_NAME: ${globals.OS_PROJECT_NAME}
+        KEYSTONE-V3-HOST: ${globals.KEYSTONE-V3-HOST}
+      skipEmail: true 
 
-  
   add-to-redeploy:
     - log: Add all necessary files and folder to the redeploy file
     - cmd [cp]: |-
-        echo XXX >> /etc/jelastic/redeploy.conf
-        echo XXX >> /etc/jelastic/redeploy.conf
-        echo XXX >> /etc/jelastic/redeploy.conf
+        echo /opt/s3ql/ >> /etc/jelastic/redeploy.conf
       user: root  
   
   redeploy:
-    - log: re-install XXX
-    - install: ${baseUrl}/scripts/redeploy.jps
+    - log: re-install s3ql
+    - cmd[${settings.node}]: |-
+        cd /opt/s3ql
+        cd s3ql-3.5.1
+        python3 setup.py install
+      user: root
+      sayYes: true
+
+  re-configure:
+    - log: Re-configure the settings and mount
+    - install: ${baseUrl}scripts/re-configure-s3ql.jps
+      settings:
+        node: "${targetNodes.nodeGroup}"
+        OS_USERNAME: ${globals.OS_USERNAME}
+        OS_PASSWORD: ${globals.OS_PASSWORD}
+        REGION_NAME: ${globals.REGION_NAME}
+        CT_NAME: ${globals.CT_NAME}
+        OS_PROJECT_NAME: ${globals.OS_PROJECT_NAME}
+        KEYSTONE-V3-HOST: ${globals.KEYSTONE-V3-HOST}
       skipEmail: true
 
-success:
-  email: text/success-email.md
-  text: text/success-text.md
+  update:
+    - log: Update s3ql
+    - install: ${baseUrl}scripts/update-s3ql.jps
+      settings:
+        node: "${targetNodes.nodeGroup}"
+      skipEmail: true
+
+#success:
+#  email: text/success-email.md
+#  text: text/success-text.md
