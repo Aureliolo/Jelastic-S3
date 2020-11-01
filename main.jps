@@ -1,8 +1,8 @@
-type: install / update
+type: update
 version: 0.1
-name: XXX
-baseUrl: https://raw.githubusercontent.com/panslothda/XXX
-logo: images/XXX
+name: S3 Mount
+baseUrl: https://raw.githubusercontent.com/panslothda/Jelastic-S3/master
+logo: images/logo.png
 homepage: https://XXX
 description: |
   XXX
