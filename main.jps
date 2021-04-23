@@ -1,5 +1,4 @@
 type: update
-version: 0.1
 name: S3 Mount
 baseUrl: https://raw.githubusercontent.com/panslothda/Jelastic-S3/master
 logo: images/logo.png
