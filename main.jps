@@ -1,6 +1,6 @@
 type: update
 name: S3 Mount
-baseUrl: https://raw.githubusercontent.com/panslothda/Jelastic-S3/master
+baseUrl: https://raw.githubusercontent.com/Aureliolo/Jelastic-S3/master
 logo: images/logo.png
 description: |
   Allows the mounting of S3 Buckets
